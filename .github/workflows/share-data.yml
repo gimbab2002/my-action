@@ -1,0 +1,53 @@
+name: Share data between jobs
+
+on: [push]
+
+jobs:
+  job_1:
+    name: Add 3 and 7
+    runs-on: ubuntu-24.04
+    steps:
+      - shell: bash
+        run: |
+          expr 3 + 7 > math-homework1.txt
+      - name: Upload math result for job 1
+        uses: actions/upload-artifact@v4
+        with:
+          name: homework1
+          path: math-homework1.txt
+
+  job_2:
+    name: Multiply by 9
+    needs: job_1
+    runs-on: windows-latest
+    steps:
+      - name: Download math result for job 1
+        uses: actions/download-artifact@v4
+        with:
+          name: homework1
+          path: homework
+      - shell: bash
+        run: |
+          value=`cat homework/math-homework1.txt`
+          expr $value \* 9 > math-homework2.txt
+      - name: Upload math result for job 2
+        uses: actions/upload-artifact@v4
+        with:
+          name: homework2
+          path: math-homework2.txt
+
+  job_3:
+    name: Display results
+    needs: job_2
+    runs-on: macOS-latest
+    steps:
+      - name: Download math result for job 2
+        uses: actions/download-artifact@v4
+        with:
+          name: homework2
+          path: homework
+      - name: Print the final result
+        shell: bash
+        run: |
+          value=`cat homework/math-homework2.txt`
+          echo The result is $value
